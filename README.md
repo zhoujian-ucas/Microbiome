@@ -1,1 +1,1 @@
-Zlab研究团队微生物组分析方案
+Provding solutions for microbiome data analysis and mining, coming soon~
