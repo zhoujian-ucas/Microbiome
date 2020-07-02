@@ -1,0 +1,40 @@
+1. 查看 conda 当前版本以及安装了哪些包
+
+conda -V
+conda list
+2. 查看 conda 当前存在哪些虚拟环境
+
+conda env list  或
+conda info -e
+3. 检查更新当前 conda 环境
+
+conda update conda
+4. 创建一个你所需要的 python 虚拟环境
+
+conda create --name pythonConda2.7 python=2.7   # 创建一个名为 pythonConda2.7，python 版本为 2.7 的虚拟环境
+conda create --name pythonConda python=3.7      # 创建一个名为 pythonConda，python 版本为 3.7 的虚拟环境
+　　以上创建好的虚拟环境都保存在你安装 conda 目录中的 envs 目录中。
+
+5. 使用激活对应的虚拟环境
+
+　　打开命令行输入：python --version 可以检查当前 python 的版本。
+
+　　使用如下命令即可激活你的虚拟环境(即将 python 的版本改变)。
+
+Linux:  source activate your_env_name(虚拟环境名称)
+Windows: activate your_env_name(虚拟环境名称)
+　　这时再使用：python --version 可以检查当前 python 版本是否为你想要的。
+
+6. 对当前选定的虚拟环境安装额外的包
+
+conda install --name your_env_name [package]
+7. 关闭虚拟环境(即从当前环境退出返回使用PATH环境中的默认python版本)
+
+Linux: source deactivate
+Windows: deactivate
+8. 删除虚拟环境中已经安装的包
+
+conda remove --name your_env_name  package_name
+9. 删除已有的虚拟环境
+
+conda remove --name your_env_name --all

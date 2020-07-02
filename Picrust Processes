@@ -1,0 +1,12 @@
+cat A1.fna A2.fna A3.fna A4.fna A5.fna A6.fna A7.fna A8.fna B1.fna B2.fna B3.fna B4.fna B5.fna B6.fna B7.fna B8.fna C1.fna C2.fna C3.fna C4.fna C5.fna C6.fna C7.fna C8.fna D1.fna D2.fna D3.fna D4.fna D5.fna D6.fna D7.fna D8.fna E1.fna E2.fna E3.fna E4.fna E5.fna E6.fna E7.fna E8.fna F1.fna F2.fna F3.fna F4.fna F5.fna F6.fna F7.fna F8.fna>seq.fna
+
+
+echo "pick_otus:enable_rev_strand_match True"  >> $PWD/otu_picking_params_97.txt
+echo "pick_otus:similarity 0.97" >> $PWD/otu_picking_params_97.txt
+pick_closed_reference_otus.py -i $PWD/seq.fna -o $PWD/NEW/ -p $PWD/otu_picking_params_97.txt -r $PWD/gg_13_5_otus/rep_set/97_otus.fasta -t $PWD/gg_13_5_otus/taxonomy/97_otu_taxonomy.txt
+
+filter_otus_from_otu_table.py -i otu_table.biom -o closed_otu_table.biom --negate_ids_to_exclude -e $PWD/gg_13_5_otus/rep_set/97_otus.fasta
+
+filter_samples_from_otu_table.py -i closed_otu_table.biom -o closed_otu_table_filt.biom -n 1
+
+biom convert -i otu_table.biom -o new.txt --to-tsv
