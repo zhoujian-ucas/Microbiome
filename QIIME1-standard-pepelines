@@ -1,0 +1,75 @@
+###---qiime-ab------
+# Generate BIOM table summary command 
+biom summarize-table -i otus/otu_table_mc2_w_tax_no_pynast_failures.biom -o cdout//biom_table_summary.txt 
+# Filter low sequence count samples from table (minimum sequence count: 1114) command 
+filter_samples_from_otu_table.py -i otus/otu_table_mc2_w_tax_no_pynast_failures.biom -o cdout//table_mc1114.biom -n 1114
+# Rarify the OTU table to 1114 sequences/sample command 
+single_rarefaction.py -i cdout//table_mc1114.biom -o cdout//table_even1114.biom -d 1114
+# Beta Diversity (weighted_unifrac) command 
+beta_diversity.py -i cdout//table_even1114.biom -o cdout//bdiv_even1114/ --metrics weighted_unifrac  -t otus/rep_set.tre 
+# Rename distance matrix (weighted_unifrac) command 
+mv cdout//bdiv_even1114//weighted_unifrac_table_even1114.txt cdout//bdiv_even1114//weighted_unifrac_dm.txt
+# Principal coordinates (weighted_unifrac) command 
+principal_coordinates.py -i cdout//bdiv_even1114//weighted_unifrac_dm.txt -o cdout//bdiv_even1114//weighted_unifrac_pc.txt 
+# Make emperor plots, weighted_unifrac) command 
+make_emperor.py -i cdout//bdiv_even1114//weighted_unifrac_pc.txt -o cdout//bdiv_even1114//weighted_unifrac_emperor_pcoa_plot/ -m map.tsv 
+# Beta Diversity (unweighted_unifrac) command 
+beta_diversity.py -i cdout//table_even1114.biom -o cdout//bdiv_even1114/ --metrics unweighted_unifrac  -t otus/rep_set.tre 
+# Rename distance matrix (unweighted_unifrac) command 
+mv cdout//bdiv_even1114//unweighted_unifrac_table_even1114.txt cdout//bdiv_even1114//unweighted_unifrac_dm.txt
+# Principal coordinates (unweighted_unifrac) command 
+principal_coordinates.py -i cdout//bdiv_even1114//unweighted_unifrac_dm.txt -o cdout//bdiv_even1114//unweighted_unifrac_pc.txt 
+# Make emperor plots, unweighted_unifrac) command 
+make_emperor.py -i cdout//bdiv_even1114//unweighted_unifrac_pc.txt -o cdout//bdiv_even1114//unweighted_unifrac_emperor_pcoa_plot/ -m map.tsv 
+# Alpha rarefaction command 
+multiple_rarefactions.py -i cdout//table_mc1114.biom -m 10 -x 1114 -s 110 -o cdout//arare_max1114//rarefaction/ 
+# Alpha diversity on rarefied OTU tables command 
+alpha_diversity.py -i cdout//arare_max1114//rarefaction/ -o cdout//arare_max1114//alpha_div/  -t otus/rep_set.tre
+# Collate alpha command 
+collate_alpha.py -i cdout//arare_max1114//alpha_div/ -o cdout//arare_max1114//alpha_div_collated/ 
+# Removing intermediate files command 
+rm -r cdout//arare_max1114//rarefaction/ cdout//arare_max1114//alpha_div/
+# Rarefaction plot: All metrics command 
+make_rarefaction_plots.py -i cdout//arare_max1114//alpha_div_collated/ -m map.tsv -o cdout//arare_max1114//alpha_rarefaction_plots/ 
+# Sort OTU Table command 
+sort_otu_table.py -i cdout//table_mc1114.biom -o cdout//taxa_plots/table_mc1114_sorted.biom
+# Summarize Taxonomy command 
+summarize_taxa.py -i cdout//taxa_plots/table_mc1114_sorted.biom -o cdout//taxa_plots/ 
+# Plot Taxonomy Summary command 
+plot_taxa_summary.py -i cdout//taxa_plots/table_mc1114_sorted_L2.txt,cdout//taxa_plots/table_mc1114_sorted_L3.txt,cdout//taxa_plots/table_mc1114_sorted_L4.txt,cdout//taxa_plots/table_mc1114_sorted_L5.txt,cdout//taxa_plots/table_mc1114_sorted_L6.txt -o cdout//taxa_plots//taxa_summary_plots/ 
+# Compress the filtered BIOM table command 
+gzip cdout//table_mc1114.biom
+# Compress the rarefied BIOM table command 
+gzip cdout//table_even1114.biom
+
+#----PICKOTUS-----
+# Pick Reference OTUs command 
+pick_otus.py -i slout/seqs.fna -o otus//step1_otus -r /home/syj_group/syj05stu/soft/anaconda2/envs/qiime1/lib/python2.7/site-packages/qiime_default_reference/gg_13_8_otus/rep_set/97_otus.fasta -m uclust_ref --enable_rev_strand_match --suppress_new_clusters
+# Generate full failures fasta file command 
+filter_fasta.py -f slout/seqs.fna -s otus//step1_otus/seqs_failures.txt -o otus//step1_otus/failures.fasta
+# Pick rep set command 
+pick_rep_set.py -i otus//step1_otus/seqs_otus.txt -o otus//step1_otus/step1_rep_set.fna -f slout/seqs.fna
+# Pick de novo OTUs on step1 failures command 
+pick_otus.py -i otus//step1_otus/failures.fasta -o otus//step4_otus/ -m uclust  --denovo_otu_id_prefix New.CleanUp.ReferenceOTU --enable_rev_strand_match
+# Merge OTU maps command 
+cat otus//step1_otus/seqs_otus.txt  otus//step4_otus//failures_otus.txt > otus//final_otu_map.txt
+# Pick representative set for subsampled failures command 
+pick_rep_set.py -i otus//step4_otus//failures_otus.txt -o otus//step4_otus//step4_rep_set.fna -f otus//step1_otus/failures.fasta
+# Filter singletons from the otu map using API 
+python -c "import qiime; qiime.filter.filter_otus_from_otu_map('/home/syj_group/syj05stu/moving_pictures_tutorial-1.9.0/illumina/otus/final_otu_map.txt', '/home/syj_group/syj05stu/moving_pictures_tutorial-1.9.0/illumina/otus/final_otu_map_mc2.txt', '2')"
+# Write non-singleton otus representative sequences from step1 to the final rep set file: otus//rep_set.fna
+# Copy the full input refseqs file to the new refseq file
+cp /home/syj_group/syj05stu/soft/anaconda2/envs/qiime1/lib/python2.7/site-packages/qiime_default_reference/gg_13_8_otus/rep_set/97_otus.fasta otus//new_refseqs.fna
+# Write non-singleton otus representative sequences from step 4 to the final representative set and the new reference set (otus//rep_set.fna and otus//new_refseqs.fna respectively)
+# Make the otu table command 
+make_otu_table.py -i otus//final_otu_map_mc2.txt -o otus//otu_table_mc2.biom
+# Assign taxonomy command 
+assign_taxonomy.py -o otus//uclust_assigned_taxonomy -i otus//rep_set.fna 
+# Add taxa to OTU table command 
+biom add-metadata -i otus//otu_table_mc2.biom --observation-metadata-fp otus//uclust_assigned_taxonomy/rep_set_tax_assignments.txt -o otus//otu_table_mc2_w_tax.biom --sc-separated taxonomy --observation-header OTUID,taxonomy
+# Align sequences command 
+align_seqs.py -i otus//rep_set.fna -o otus//pynast_aligned_seqs 
+# Filter alignment command 
+filter_alignment.py -o otus//pynast_aligned_seqs -i otus//pynast_aligned_seqs/rep_set_aligned.fasta 
+# Build phylogenetic tree command 
+make_phylogeny.py -i otus//pynast_aligned_seqs/rep_set_aligned_pfiltered.fasta -o otus//rep_set.tre 
